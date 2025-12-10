@@ -16,6 +16,12 @@
     "dev": {
       "cache": false,
       "persistent": true
-    }
+    },
+    "db:migrate": {},
+    "db:generate": {},
+    "db:push": {},
+    "db:pull": {},
+    "db:check": {},
+    "db:up": {}
   }
 }

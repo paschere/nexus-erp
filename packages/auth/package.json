@@ -1,0 +1,19 @@
+{
+  "name": "@nexus/auth",
+  "module": "src/index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "dependencies": {
+    "@nexus/db": "*"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0"
+  }
+}

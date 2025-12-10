@@ -1,0 +1,150 @@
+# Docker Compose configuration for ERP system
+# This file defines the infrastructure services needed for the application
+
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:17-alpine  # Using specific version and alpine for smaller image size
+    container_name: erp-postgres
+    restart: unless-stopped  # More conservative than 'always'
+    
+    # Environment variables from .env file
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-erp_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # Performance tuning
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
+    
+    # Only expose to localhost for security
+    ports:
+      - "127.0.0.1:5432:5432"
+    
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Optional: Add init scripts
+      # - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    
+    # Health check to ensure database is ready
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-erp_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    networks:
+      - erp-network
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Use read-only root filesystem where possible
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+
+  # Redis Cache Service
+  redis:
+    image: redis:7-alpine  # Using specific version and alpine
+    container_name: erp-redis
+    restart: unless-stopped
+    
+    # Only expose to localhost
+    ports:
+      - "127.0.0.1:6379:6379"
+    
+    # Use config file instead of command line for better maintainability
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      --maxmemory ${REDIS_MAXMEMORY:-512mb}
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --loglevel ${REDIS_LOGLEVEL:-notice}
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    
+    volumes:
+      - redis_data:/data
+      # Optional: Use custom redis config
+      # - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+    
+    networks:
+      - erp-network
+    
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    
+    # Prevent container from gaining additional privileges
+    user: "999:999"
+
+# Named volumes for data persistence
+volumes:
+  db_data:
+    driver: local
+    name: erp_postgres_data
+    # Optional: Use external volume for production
+    # external: true
+  
+  redis_data:
+    driver: local
+    name: erp_redis_data
+    # Optional: Use external volume for production
+    # external: true
+
+# Custom network for service isolation
+networks:
+  erp-network:
+    driver: bridge
+    name: erp_network
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

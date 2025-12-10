@@ -36,3 +36,20 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+
+# Docker
+docker-compose.override.yml
+.docker
+*.tar
+*.tar.gz
+docker-logs.txt
+
+# Database backups
+backups/
+*.sql
+*.dump
+*.backup
+
+# Redis persistence
+dump.rdb
+appendonly.aof
