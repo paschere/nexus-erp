@@ -69,15 +69,28 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { useState, useMemo } from "react"
 
+interface Module {
+  id: string
+  icon: any
+  label: string
+  badge?: string
+}
+
+interface Category {
+  label: string
+  icon: any
+  modules: Module[]
+}
+
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
   activeModule: string
-  onModuleChange: (module: string) => void
+  onModuleChange?: (module: string) => void
   onOpenFlowBuilder: () => void
 }
 
-const modulesByCategory = {
+const modulesByCategory: Record<string, Category> = {
   ejecutivo: {
     label: "Ejecutivo & Analytics",
     icon: TrendingUp,
@@ -178,6 +191,8 @@ const modulesByCategory = {
   },
 }
 
+import Link from "next/link"
+
 export function Sidebar({ collapsed, onToggle, activeModule, onModuleChange, onOpenFlowBuilder }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
@@ -207,6 +222,10 @@ export function Sidebar({ collapsed, onToggle, activeModule, onModuleChange, onO
     setExpandedCategories((prev) =>
       prev.includes(categoryKey) ? prev.filter((k) => k !== categoryKey) : [...prev, categoryKey],
     )
+  }
+
+  const getHref = (moduleId: string) => {
+    return moduleId === "dashboard" ? "/dashboard" : `/dashboard/${moduleId}`
   }
 
   if (collapsed) {
@@ -297,9 +316,9 @@ export function Sidebar({ collapsed, onToggle, activeModule, onModuleChange, onO
                   {isExpanded && (
                     <div className="space-y-0.5 pl-1">
                       {category.modules.map((module) => (
-                        <button
+                        <Link
                           key={module.id}
-                          onClick={() => onModuleChange(module.id)}
+                          href={getHref(module.id)}
                           className={cn(
                             "w-full flex items-center gap-2.5 px-3 py-2 rounded-md transition-all text-sm",
                             activeModule === module.id
@@ -323,7 +342,7 @@ export function Sidebar({ collapsed, onToggle, activeModule, onModuleChange, onO
                               {module.badge}
                             </Badge>
                           )}
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   )}
@@ -336,28 +355,34 @@ export function Sidebar({ collapsed, onToggle, activeModule, onModuleChange, onO
 
       {/* Footer */}
       <div className="p-3 border-t border-sidebar-border space-y-2">
-        <Button
-          onClick={() => onModuleChange("billing")}
-          variant="outline"
-          className="w-full h-9 justify-start gap-2 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border-emerald-500/30 hover:from-emerald-500/10 hover:to-teal-500/10"
+        <Link
+          href="/dashboard/billing"
+          className={cn(
+             "w-full h-9 flex items-center justify-start gap-2 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 border border-emerald-500/30 hover:from-emerald-500/10 hover:to-teal-500/10 rounded-md px-4 py-2 transition-colors",
+             activeModule === "billing" ? "ring-1 ring-emerald-500/50" : ""
+          )}
         >
           <CreditCard className="h-4 w-4 text-emerald-400" />
           <span className="text-sm font-medium flex-1 text-left text-emerald-400">Suscripción Pro</span>
-        </Button>
+        </Link>
         <div className="grid grid-cols-2 gap-2">
-          <Button
-            onClick={() => onModuleChange("marketplace")}
-            variant="ghost"
-            size="sm"
-            className="h-8 text-xs gap-1.5"
+          <Link
+            href="/dashboard/marketplace"
+             className={cn(
+                "h-8 text-xs gap-1.5 flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+                activeModule === "marketplace" ? "bg-accent text-accent-foreground" : ""
+             )}
           >
             <ShoppingBasket className="h-3.5 w-3.5" />
             Marketplace
-          </Button>
-          <Button onClick={() => onModuleChange("ayuda")} variant="ghost" size="sm" className="h-8 text-xs gap-1.5">
+          </Link>
+          <Link href="/dashboard/ayuda" className={cn(
+             "h-8 text-xs gap-1.5 flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+             activeModule === "ayuda" ? "bg-accent text-accent-foreground" : ""
+          )}>
             <HelpCircle className="h-3.5 w-3.5" />
             Ayuda
-          </Button>
+          </Link>
         </div>
       </div>
     </aside>

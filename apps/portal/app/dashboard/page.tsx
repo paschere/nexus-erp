@@ -1,7 +1,7 @@
 "use client";
 
-import { DashboardLayout } from "@/components/dashboard/dashboard-layout";
+import { MainDashboard } from "@/components/dashboard/modules/main-dashboard";
 
-export default function Home() {
-  return <DashboardLayout />;
+export default function Page() {
+  return <MainDashboard />;
 }
